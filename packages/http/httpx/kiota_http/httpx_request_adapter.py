@@ -524,7 +524,7 @@ class HttpxRequestAdapter(RequestAdapter):
             _throw_failed_resp_span.set_attribute(ERROR_MAPPING_FOUND_KEY, bool(error_map))
             if not error_map:
                 exc = APIError(
-                    "The server returned an unexpected status code and no error class is registered"
+                    response.text or "The server returned an unexpected status code and no error class is registered"
                     f" for this code {response_status_code}",
                     response_status_code,
                     response_headers,  # type: ignore
