@@ -138,9 +138,9 @@ async def test_throw_failed_responses_null_error_map(
     with pytest.raises(APIError) as e:
         span = mock_otel_span
         await request_adapter.throw_failed_responses(simple_error_response, None, span, span)
+    
     assert (
-        str(e.value.message) == "The server returned an unexpected status code and"
-        " no error class is registered for this code 404"
+        str(e.value.message) == '{"error":"not found"}'
     )
     assert e.value.response_status_code == 404
 
@@ -160,8 +160,7 @@ async def test_throw_failed_responses_no_error_class(
             simple_error_response, mock_error_500_map, span, span
         )
     assert (
-        str(e.value.message) == "The server returned an unexpected status code and"
-        " no error class is registered for this code 404"
+        str(e.value.message) == '{"error":"not found"}'
     )
     assert e.value.response_status_code == 404
 

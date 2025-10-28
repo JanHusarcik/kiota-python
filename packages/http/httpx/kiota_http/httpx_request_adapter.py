@@ -540,7 +540,7 @@ class HttpxRequestAdapter(RequestAdapter):
                 and self._error_class_not_in_error_mapping(error_map, response_status_code)
             ):
                 exc = APIError(
-                    "The server returned an unexpected status code and no error class is registered"
+                    response.text or "The server returned an unexpected status code and no error class is registered"
                     f" for this code {response_status_code}",
                     response_status_code,
                     response_headers,  # type: ignore
