@@ -297,7 +297,8 @@ class RequestInformation:
         if isinstance(value, Enum):
             sanitized_value = value.value
         elif isinstance(value, list) and all(isinstance(x, Enum) for x in value):
-            sanitized_value = ','.join([x.value for x in value])
+            #sanitized_value = ','.join([x.value for x in value])
+            sanitized_value = [x.name for x in value]
         elif isinstance(value, datetime):
             timezone_info = value.tzinfo
             if timezone_info is None:
