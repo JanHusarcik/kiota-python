@@ -13,6 +13,7 @@ from io import BytesIO
 from typing import TYPE_CHECKING, Any, Optional, TypeVar, Union
 from urllib.parse import unquote
 from uuid import UUID
+import warnings
 
 from opentelemetry import trace
 from stduritemplate import StdUriTemplate
@@ -24,7 +25,7 @@ from .method import Method
 from .multipart_body import MultipartBody
 from .request_option import RequestOption
 from .serialization import Parsable, SerializationWriter
-
+import sys 
 if TYPE_CHECKING:
     from .request_adapter import RequestAdapter
 
@@ -297,8 +298,14 @@ class RequestInformation:
         if isinstance(value, Enum):
             sanitized_value = value.value
         elif isinstance(value, list) and all(isinstance(x, Enum) for x in value):
+
+            warnings.warn(
+                "Kiota: my hack to support `collectionFormat=multi`",
+                UserWarning,
+                stacklevel=2
+            )
             #sanitized_value = ','.join([x.value for x in value])
-            sanitized_value = [x.name for x in value]
+            sanitized_value = [x.name for x in value] 
         elif isinstance(value, datetime):
             timezone_info = value.tzinfo
             if timezone_info is None:
