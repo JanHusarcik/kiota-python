@@ -183,6 +183,14 @@ def test_sets_enum_values_in_path_parameters():
     request_info.path_parameters["dataset"] = [TestEnum.VALUE1, TestEnum.VALUE2]
     assert request_info.url == "https://example.com/value1%2Cvalue2"
 
+def test_sets_exploded_enum_values_in_query_parameters():
+    """Tests that list values are expanded as repeated query parameters
+    (collectionFormat=multi) when the url template uses the explode modifier
+    """
+    request_info = RequestInformation(Method.GET, "https://example.com/me{?dataset*}")
+    request_info.set_query_string_parameters_from_raw_object(QueryParams([TestEnum.VALUE1, TestEnum.VALUE2]))
+    assert request_info.url == "https://example.com/me?dataset=value1&dataset=value2"
+
 def test_sets_uuid_values_in_path_parameters():
     """Tests setting uuid values in path parameters
     """

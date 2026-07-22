@@ -10,10 +10,10 @@ from dataclasses import fields, is_dataclass
 from datetime import date, datetime, time, timedelta, timezone
 from enum import Enum
 from io import BytesIO
+import re
 from typing import TYPE_CHECKING, Any, Optional, TypeVar, Union
 from urllib.parse import unquote
 from uuid import UUID
-import warnings
 
 from opentelemetry import trace
 from stduritemplate import StdUriTemplate
@@ -25,7 +25,7 @@ from .method import Method
 from .multipart_body import MultipartBody
 from .request_option import RequestOption
 from .serialization import Parsable, SerializationWriter
-import sys 
+
 if TYPE_CHECKING:
     from .request_adapter import RequestAdapter
 
@@ -112,11 +112,9 @@ class RequestInformation:
 
         data: dict[str, Any] = {}
         for key, val in self.query_parameters.items():
-            val = self._get_sanitized_value(val)
-            data[key] = val
+            data[key] = self._sanitize_parameter_value(key, val)
         for key, val in self.path_parameters.items():
-            val = self._get_sanitized_value(val)
-            data[key] = val
+            data[key] = self._sanitize_parameter_value(key, val)
 
         result = StdUriTemplate.expand(self.url_template, data)
         return result
@@ -287,6 +285,39 @@ class RequestInformation:
         if content_type:
             self.headers.try_add(self.CONTENT_TYPE_HEADER, content_type)
         self.content = writer.get_serialized_content()
+
+    _TEMPLATE_EXPRESSION_RE = re.compile(r'\{([^}]*)\}')
+
+    def _is_exploded_variable(self, key: str) -> bool:
+        """Checks whether the given variable name uses the explode modifier
+        (e.g. `status*`) in any expression of the url template, per RFC 6570.
+        """
+        if not self.url_template:
+            return False
+        for expression in self._TEMPLATE_EXPRESSION_RE.findall(self.url_template):
+            # Strip a leading operator character (?, &, #, /, ., ;) if present.
+            if expression and expression[0] in '+#./;?&=,!@|':
+                expression = expression[1:]
+            varspecs = [varspec.strip() for varspec in expression.split(',')]
+            if f"{key}*" in varspecs:
+                return True
+        return False
+
+    def _sanitize_parameter_value(self, key: str, value: Any) -> Any:
+        """Sanitizes a path/query parameter value, taking into account whether
+        the corresponding url template variable uses the explode modifier.
+
+        Args:
+            key (str): The parameter name, as it appears in the url template.
+            value (Any): The value to sanitize.
+        """
+        if isinstance(value, list) and not self._is_exploded_variable(key):
+            # Without the explode modifier, RFC 6570 joins list values with a
+            # literal, unencoded comma. Kiota expects the comma itself to be
+            # percent-encoded here, so pre-join into a single string and let
+            # it be encoded like any other scalar value.
+            return ','.join(str(self._get_sanitized_value(x)) for x in value)
+        return self._get_sanitized_value(value)
 
     def _get_sanitized_value(self, value: Any) -> Any:
         """Replaces enum values with their string representation.

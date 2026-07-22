@@ -1,15 +1,12 @@
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
-
-[tool.poetry]
+[project]
 name = "microsoft-kiota-abstractions"
 version = "1.9.7"
 description = "Core abstractions for kiota generated libraries in Python"
-authors = ["Microsoft <graphtooling+python@microsoft.com>"]
+authors = [{name = "Microsoft", email = "graphtooling+python@microsoft.com"}]
 license = "MIT"
 readme = "README.md"
 keywords = ["kiota", "openAPI", "Microsoft", "Graph"]
+requires-python = ">=3.9,<4.0"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python :: 3.9",
@@ -19,25 +16,33 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: MIT License",
 ]
-homepage = "https://github.com/microsoft/kiota#readme"
-repository = "https://github.com/microsoft/kiota-python"
-documentation = "https://learn.microsoft.com/openapi/kiota/"
-packages = [{include = "kiota_abstractions"}]
+dependencies = [
+    "std-uritemplate>=2.0.0",
+    "opentelemetry-api>=1.27.0",
+    "opentelemetry-sdk>=1.27.0",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.9,<4.0"
-std-uritemplate = ">=2.0.0"
-opentelemetry-api = ">=1.27.0"
-opentelemetry-sdk = ">=1.27.0"
+[project.urls]
+Homepage = "https://github.com/microsoft/kiota#readme"
+Repository = "https://github.com/microsoft/kiota-python"
+Documentation = "https://learn.microsoft.com/openapi/kiota/"
 
-[tool.poetry.group.dev.dependencies]
-yapf = ">=0.40.2,<0.44.0"
-isort = ">=5.13.2,<7.0.0"
-pylint = "^3.2.7"
-mypy = "^1.11.2"
-pytest = "^8.3.2"
-pytest-asyncio = ">=0.24,<0.26"
-poetry-plugin-mono-repo-deps = ">=0.2.1,<0.4.0"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["kiota_abstractions"]
+
+[dependency-groups]
+dev = [
+    "yapf>=0.40.2,<0.44.0",
+    "isort>=5.13.2,<7.0.0",
+    "pylint>=3.2.7,<4.0.0",
+    "mypy>=1.11.2,<2.0.0",
+    "pytest>=8.3.2,<9.0.0",
+    "pytest-asyncio>=0.24,<0.26",
+]
 
 [mypy]
 warn_unused_configs = true
@@ -51,7 +56,3 @@ column_limit = 100
 
 [tool.isort]
 profile = "hug"
-
-[tool.poetry-monorepo.deps]
-enabled = true
-commands = ["build", "export", "publish"]
