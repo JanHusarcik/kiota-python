@@ -297,15 +297,12 @@ class RequestInformation:
         sanitized_value = value
         if isinstance(value, Enum):
             sanitized_value = value.value
-        elif isinstance(value, list) and all(isinstance(x, Enum) for x in value):
-
-            warnings.warn(
-                "Kiota: my hack to support `collectionFormat=multi`",
-                UserWarning,
-                stacklevel=2
-            )
-            #sanitized_value = ','.join([x.value for x in value])
-            sanitized_value = [x.name for x in value] 
+        elif isinstance(value, list):
+            # Keep collections as a list so URL templates using the explode
+            # modifier (e.g. `{?status*}`) expand them into repeated query
+            # params (`status=NEW&status=CANCELLED`). Sanitize each element so
+            # enums become their wire `.value`, datetimes become isoformat, etc.
+            sanitized_value = [self._get_sanitized_value(x) for x in value]
         elif isinstance(value, datetime):
             timezone_info = value.tzinfo
             if timezone_info is None:
